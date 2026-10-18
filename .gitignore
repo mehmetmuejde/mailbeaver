@@ -1,0 +1,55 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Test coverage report (pnpm test:coverage)
+coverage/
+
+# Rust build output, at any level (workspace root, older src-tauri builds)
+target/
+
+# AI assistant files — tracked in this project (overrides the global git ignore, ADR-0016)
+!CLAUDE.md
+!.claudeignore
+!.claude/
+!.mcp.json
+
+# Claude runtime (auto-generated, never commit)
+.claude/sessions/
+.claude/projects/
+.claude/cache/
+.claude/file-history/
+.claude/paste-cache/
+.claude/session-env/
+.claude/tasks/
+.claude/telemetry/
+.claude/backups/
+.claude/debug/
+.claude/ide/
+.claude/shell-snapshots/
+.claude/statsig/
+.claude/todos/
+.claude/plans/
+.claude/history.jsonl
+.claude/settings.local.json

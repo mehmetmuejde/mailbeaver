@@ -1,0 +1,55 @@
+# Cargo workspace (ADR-0028): the Tauri-free core and its two hosts.
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/server", "src-tauri"]
+default-members = ["crates/core", "crates/server", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Mehmet Müjde <muejde.mehmet@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/mehmetmuejde/mailbeaver"
+edition = "2024"
+rust-version = "1.99"
+
+# Pinned exactly; new versions are taken on purpose (CLAUDE.md).
+[workspace.dependencies]
+mailbeaver-core = { path = "crates/core" }
+anyhow = "=1.0.104"
+axum = "=0.8.9"
+base64 = { version = "=0.23.1", default-features = false, features = ["std"] }
+mail-parser = "=0.11.9"
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls"] }
+rmcp = { version = "=3.5.1", features = ["server", "macros", "transport-streamable-http-server", "schemars"] }
+rusqlite = { version = "=0.40.2", features = ["bundled"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+tauri = { version = "=2.12.4", features = ["tray-icon", "image-png"] }
+tauri-build = { version = "=2.7.3", features = [] }
+tauri-plugin-notification = "=2.6.0"
+tauri-plugin-opener = "=2.7.2"
+tempfile = "=3.27.0"
+thiserror = "=2.0.21"
+tokio = { version = "=1.53.3", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "macros", "signal"] }
+tokio-stream = { version = "=0.1.19", features = ["sync"] }
+tower-http = { version = "=0.7.1", features = ["cors"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter"] }
+utoipa = { version = "=6.0.0", features = ["axum_extras"] }
+utoipa-axum = "=0.3.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+
+# Smaller release binaries, see https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

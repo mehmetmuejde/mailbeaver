@@ -1,0 +1,33 @@
+[package]
+name = "mailbeaver"
+description = "Catches outgoing mail during development and shows it like a mail client"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+# The `_lib` suffix keeps the library name apart from the binary on Windows,
+# see https://github.com/rust-lang/cargo/issues/8519
+name = "mailbeaver_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+mailbeaver-core.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+tauri.workspace = true
+tauri-plugin-notification.workspace = true
+tauri-plugin-opener.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

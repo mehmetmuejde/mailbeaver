@@ -1,0 +1,52 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!src-tauri",
+      "!crates",
+      "!target",
+      "!dist",
+      "!coverage",
+      "!.scratch",
+      "!node_modules",
+      "!src/shared/ui/primitives"
+    ]
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "correctness": { "noNestedComponentDefinitions": "error" },
+      "performance": { "noReExportAll": "error" },
+      "suspicious": { "noConsole": "error" },
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["@/shared/ui/primitives", "@/shared/ui/primitives/**"],
+                "message": "Use the design system in @/shared/ui/<component> instead of the shadcn primitives."
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/shared/ui/**"],
+      "linter": { "rules": { "style": { "noRestrictedImports": "off" } } }
+    }
+  ],
+  "assist": { "actions": { "source": { "organizeImports": "on" } } }
+}

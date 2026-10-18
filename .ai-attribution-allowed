@@ -1,0 +1,3 @@
+Mehmet Müjde decided on 2026-10-17 that Claude may appear as co-author in this
+repository (ADR-0016). This file switches off the commit guard that blocks AI
+attribution; every repository without it stays guarded.

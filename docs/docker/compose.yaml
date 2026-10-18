@@ -1,0 +1,27 @@
+# Mailbeaver as a container next to your application.
+# Start: docker compose -f docs/docker/compose.yaml up -d — then open http://localhost:8026
+services:
+  mailbeaver:
+    image: ghcr.io/mehmetmuejde/mailbeaver:latest
+    restart: unless-stopped
+    ports:
+      # Published on loopback only: the API has no login.
+      - "127.0.0.1:1026:1026"
+      - "127.0.0.1:8026:8026"
+    environment:
+      # Names the UI is opened by; requests with any other Host header are refused.
+      MAILBEAVER_ALLOWED_HOSTS: "localhost:8026,mailbeaver:8026"
+      # What the UI shows as the addresses to configure.
+      MAILBEAVER_PUBLIC_SMTP_ADDRESS: "localhost:1026"
+      MAILBEAVER_PUBLIC_HTTP_ADDRESS: "localhost:8026"
+    volumes:
+      - mailbeaver-data:/data
+
+  # Your application sends to mailbeaver:1026 inside the Compose network.
+  # app:
+  #   environment:
+  #     SMTP_HOST: mailbeaver
+  #     SMTP_PORT: "1026"
+
+volumes:
+  mailbeaver-data:

@@ -1,0 +1,169 @@
+name: Release
+
+# A pushed version tag (v1.2.3) builds every platform, publishes a GitHub release,
+# updates the Homebrew cask and pushes the Docker image of the headless server to GHCR.
+# Set the version first with `pnpm release:version 1.2.3`.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-24.04
+    outputs:
+      release-id: ${{ steps.release.outputs.id }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check that the tag matches the app version
+        id: version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version}"
+            exit 1
+          fi
+          grep -q "^version = \"${version}\"" Cargo.toml \
+            || { echo "::error::Cargo.toml (workspace) is not at ${version}"; exit 1; }
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Create a draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" --draft --verify-tag \
+            --title "Mailbeaver ${GITHUB_REF_NAME}" --generate-notes
+          echo "id=$(gh release view "${GITHUB_REF_NAME}" --json databaseId --jq .databaseId)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-15
+            target: aarch64-apple-darwin
+          - platform: macos-15
+            target: x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - platform: windows-2025
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install system libraries for Tauri
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      # rustup installs the toolchain pinned in rust-toolchain.toml.
+      - run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: ${{ matrix.target }}
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          # macOS signing and notarization (ADR-0014). Without these secrets the macOS
+          # build is unsigned and Homebrew users cannot open it.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release-id }}
+          args: --target ${{ matrix.target }}
+
+  publish:
+    needs: [create-release, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release edit "${GITHUB_REF_NAME}" --draft=false --latest
+
+  docker:
+    needs: [create-release, publish]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  homebrew:
+    needs: [create-release, publish]
+    runs-on: ubuntu-24.04
+    # Needs a token with write access to mehmetmuejde/homebrew-tap; skipped without it.
+    env:
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.TAP_TOKEN != ''
+      - name: Render the cask with the release checksums
+        if: env.TAP_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: |
+          gh release download "${GITHUB_REF_NAME}" --pattern "*.dmg" --dir dmg
+          arm="$(sha256sum "dmg/Mailbeaver_${VERSION}_aarch64.dmg" | cut -d' ' -f1)"
+          intel="$(sha256sum "dmg/Mailbeaver_${VERSION}_x64.dmg" | cut -d' ' -f1)"
+          sed -e "s/{{VERSION}}/${VERSION}/" -e "s/{{SHA256_ARM}}/${arm}/" -e "s/{{SHA256_INTEL}}/${intel}/" \
+            packaging/homebrew/mailbeaver.rb.template > mailbeaver.rb
+      - name: Push the cask to the tap
+        if: env.TAP_TOKEN != ''
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: |
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/mehmetmuejde/homebrew-tap.git" tap
+          mkdir -p tap/Casks
+          cp mailbeaver.rb tap/Casks/mailbeaver.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/mailbeaver.rb
+          git commit -m "chore(mailbeaver): update to ${VERSION}"
+          git push

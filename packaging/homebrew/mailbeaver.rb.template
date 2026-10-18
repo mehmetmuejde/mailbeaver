@@ -1,0 +1,28 @@
+# Rendered by .github/workflows/release.yml into mehmetmuejde/homebrew-tap.
+cask "mailbeaver" do
+  arch arm: "aarch64", intel: "x64"
+
+  version "{{VERSION}}"
+  sha256 arm:   "{{SHA256_ARM}}",
+         intel: "{{SHA256_INTEL}}"
+
+  url "https://github.com/mehmetmuejde/mailbeaver/releases/download/v#{version}/Mailbeaver_#{version}_#{arch}.dmg"
+  name "Mailbeaver"
+  desc "Catches outgoing mail during development and shows it like a mail client"
+  homepage "https://github.com/mehmetmuejde/mailbeaver"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
+  depends_on macos: ">= :catalina"
+
+  app "Mailbeaver.app"
+
+  zap trash: [
+    "~/Library/Application Support/io.github.mehmetmuejde.mailbeaver",
+    "~/Library/Caches/io.github.mehmetmuejde.mailbeaver",
+    "~/Library/WebKit/io.github.mehmetmuejde.mailbeaver",
+  ]
+end

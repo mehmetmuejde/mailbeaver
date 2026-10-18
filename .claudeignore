@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+target/
+src-tauri/gen/
+
+# Coverage / test output
+coverage/
+
+# Logs
+*.log
+
+# Lock files (too big, not needed for reading)
+pnpm-lock.yaml
+src-tauri/Cargo.lock
+
+# shadcn CLI output, never edited by hand
+src/shared/ui/primitives/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Env files (potentially sensitive)
+.env
+.env.local
+.env.*.local

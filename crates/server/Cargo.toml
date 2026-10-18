@@ -1,0 +1,21 @@
+[package]
+name = "mailbeaver-server"
+description = "Mailbeaver without a desktop: SMTP, API and UI on one HTTP port (Docker)"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+mailbeaver-core.workspace = true
+anyhow.workspace = true
+axum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

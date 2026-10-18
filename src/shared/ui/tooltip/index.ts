@@ -1,0 +1,1 @@
+export { TooltipRoot } from "./TooltipRoot";

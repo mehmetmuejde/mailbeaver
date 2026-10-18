@@ -1,0 +1,16 @@
+# Only sources go into the build context; everything is built inside the image.
+.git
+.github
+.scratch
+.claude
+.vscode
+**/.DS_Store
+node_modules
+dist
+coverage
+target
+src-tauri/target
+src-tauri/gen
+docs
+packaging
+*.log
