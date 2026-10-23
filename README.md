@@ -22,6 +22,10 @@ Mailbeaver runs a local SMTP server. Point your application at it and every mess
 in Mailbeaver: nothing ever reaches a real inbox. It lives in your menu bar, shows the
 newest mail right in the tray menu and opens a full mail client when you need it.
 
+<p align="center">
+  <img src="docs/assets/screenshot.png" alt="Mailbeaver showing an order confirmation in the inbox, with the HTML preview and its attachment" width="900">
+</p>
+
 ## Features
 
 - **Mail client, not a log viewer** — Inbox, Archive and Trash; deleting moves to Trash,
