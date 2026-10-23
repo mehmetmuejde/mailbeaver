@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import { IS_DEV_BUILD } from "@/shared/config";
 import { hasOverlayTitleBar } from "@/shared/lib/platform";
 import { useSidebarCollapsed } from "@/shared/lib/sidebar";
 import { Logo } from "@/shared/ui/logo";
@@ -46,7 +47,7 @@ export function AppShell() {
         <div data-tauri-drag-region className={hasOverlayTitleBar() ? "h-14 shrink-0" : "h-3"} />
         <div data-tauri-drag-region className="flex justify-center px-4 pt-2 pb-6">
           <p>
-            <Logo />
+            <Logo dev={IS_DEV_BUILD} />
           </p>
         </div>
         <AppNavigation />

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   type Folder,
   type MessageListParams,
@@ -12,6 +13,7 @@ import { useSaveFolderView } from "../api/use-save-folder-view";
 import { searchToView, VIEW_KEYS } from "../model/folder-view";
 import { DEFAULT_PAGE_SIZE, type MailSearch, type MailSearchChange } from "../model/mail-search";
 import { periodStart } from "../model/period";
+import { EMPTY_SELECTION, keepVisible, type Selection, selectOne } from "../model/selection";
 import { MailEmptyFolder } from "./MailEmptyFolder";
 import { MailFolderFilter } from "./MailFolderFilter";
 import { MailListHeader } from "./MailListHeader";
@@ -19,6 +21,7 @@ import { MailMessageList } from "./MailMessageList";
 import { MailMessageView } from "./MailMessageView";
 import { MailPagination } from "./MailPagination";
 import { MailSearchBox } from "./MailSearchBox";
+import { MailSelectionPanel } from "./MailSelectionPanel";
 import { MailStatus } from "./MailStatus";
 
 type MailPageProps = {
@@ -58,13 +61,42 @@ export function MailPage({ folder, search, onSearchChange: navigate }: MailPageP
   const isEmptyFolder = !isFiltered && list !== undefined && list.total === 0;
   const title = FOLDER_LABELS[folder];
 
-  const handleSelect = (message: MessageSummary) => {
-    onSearchChange({ message: message.id });
-    if (!message.isRead) {
-      markRead.mutate(message.id);
+  const [storedSelection, setSelection] = useState<Selection>(EMPTY_SELECTION);
+  // Messages that left the list (moved, deleted, filtered) drop out of the selection.
+  const selection = keepVisible(
+    storedSelection,
+    (list?.messages ?? []).map((message) => message.id),
+  );
+  const selectedMessages =
+    selection.ids.size > 1
+      ? (list?.messages ?? []).filter((message) => selection.ids.has(message.id))
+      : [];
+
+  const openMessage = (id: number, isRead: boolean) => {
+    onSearchChange({ message: id });
+    if (!isRead) {
+      markRead.mutate(id);
     }
   };
-  const clearSelection = () => onSearchChange({ message: undefined });
+  const handleSelect = (message: MessageSummary) => {
+    setSelection(selectOne(message.id));
+    openMessage(message.id, message.isRead);
+  };
+  // One message left selected is opened; several show what can be done with them.
+  const handleSelectionChange = (next: Selection) => {
+    setSelection(next);
+    const [only] = next.ids;
+    const message = list?.messages.find((candidate) => candidate.id === only);
+    if (next.ids.size === 1 && message !== undefined) {
+      openMessage(message.id, message.isRead);
+    } else if (selectedId !== null) {
+      onSearchChange({ message: undefined });
+    }
+  };
+  const clearSelection = () => {
+    setSelection(EMPTY_SELECTION);
+    onSearchChange({ message: undefined });
+  };
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_1fr]">
@@ -103,6 +135,8 @@ export function MailPage({ folder, search, onSearchChange: navigate }: MailPageP
                 view={search.view ?? "all"}
                 showFolder={isSearch}
                 selectedId={selectedId}
+                selection={selection}
+                onSelectionChange={handleSelectionChange}
                 onSelect={handleSelect}
                 onRemoved={(id) => {
                   if (id === selectedId) {
@@ -130,7 +164,9 @@ export function MailPage({ folder, search, onSearchChange: navigate }: MailPageP
             aria-label="Selected message"
             className="flex min-h-0 flex-col overflow-hidden p-4"
           >
-            {selectedId === null ? (
+            {selectedMessages.length > 1 ? (
+              <MailSelectionPanel messages={selectedMessages} onClear={clearSelection} />
+            ) : selectedId === null ? (
               <p className="m-auto text-muted-foreground">Select a message to read it.</p>
             ) : (
               <MailMessageView key={selectedId} messageId={selectedId} onClose={clearSelection} />

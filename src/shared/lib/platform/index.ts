@@ -2,6 +2,7 @@ export {
   downloadFile,
   hasOverlayTitleBar,
   isDesktopApp,
+  isMacPlatform,
   onOpenMessageRequest,
   openExternalUrl,
   restartApp,

@@ -16,6 +16,15 @@ use mailbeaver_core::messages::{Folder, ListQuery, MessageId};
 use crate::tray_menu::{self, TrayActions, TrayMessage, TrayNode};
 
 pub const MAIN_WINDOW: &str = "main";
+
+/// Development builds say so everywhere the user sees the name.
+pub fn app_name() -> &'static str {
+    if tauri::is_dev() {
+        "Mailbeaver (Dev)"
+    } else {
+        "Mailbeaver"
+    }
+}
 pub const TRAY_ID: &str = "main";
 /// Event the UI listens to, to show a message picked in the tray.
 const OPEN_MESSAGE_EVENT: &str = "open-message";
@@ -43,7 +52,7 @@ struct OpenMessage {
 pub fn install(app: &tauri::App, status_label: &str) -> tauri::Result<TrayIcon> {
     let menu = base_menu(app.handle(), status_label, &[], None)?;
     TrayIconBuilder::with_id(TRAY_ID)
-        .tooltip("Mailbeaver")
+        .tooltip(app_name())
         .icon(Image::from_bytes(TRAY_ICON)?)
         .icon_as_template(true)
         .menu(&menu)
@@ -182,7 +191,7 @@ async fn refresh<R: Runtime>(
     )?;
     tray.set_menu(Some(menu))?;
     tray.set_title((unread > 0).then(|| unread.to_string()))?;
-    tray.set_tooltip(Some(format!("Mailbeaver – {unread} unread")))?;
+    tray.set_tooltip(Some(format!("{} – {unread} unread", app_name())))?;
     Ok(())
 }
 
@@ -198,7 +207,7 @@ fn base_menu<R: Runtime>(
     menu.append(&MenuItem::with_id(
         app,
         MENU_OPEN,
-        "Open Mailbeaver",
+        format!("Open {}", app_name()),
         true,
         None::<&str>,
     )?)?;
@@ -257,7 +266,7 @@ fn base_menu<R: Runtime>(
     menu.append(&MenuItem::with_id(
         app,
         MENU_QUIT,
-        "Quit Mailbeaver",
+        format!("Quit {}", app_name()),
         true,
         None::<&str>,
     )?)?;

@@ -12,6 +12,11 @@ export function isDesktopApp(): boolean {
   return isTauri();
 }
 
+/** macOS uses ⌘ where Windows and Linux use Ctrl, e.g. to add to a selection. */
+export function isMacPlatform(): boolean {
+  return /Mac/.test(window.navigator.userAgent);
+}
+
 /**
  * True when the macOS window draws its traffic lights over the page (overlay title
  * bar); the UI then leaves room for them and acts as the title bar.

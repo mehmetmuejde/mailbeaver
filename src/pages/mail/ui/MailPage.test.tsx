@@ -295,6 +295,79 @@ describe("MailPage", () => {
     click.mockRestore();
   });
 
+  describe("selecting several messages", () => {
+    const three = () => [
+      mailFixture({ id: 1, subject: "First" }),
+      mailFixture({ id: 2, subject: "Second" }),
+      mailFixture({ id: 3, subject: "Third" }),
+    ];
+    const item = (subject: string) => list().getByRole("button", { name: new RegExp(subject) });
+
+    it("adds with Ctrl, extends with Shift and acts on all of them", async () => {
+      const user = setup(three());
+      await list().findByRole("button", { name: /Third/ });
+
+      await user.click(item("Third"));
+      await user.keyboard("{Control>}");
+      await user.click(item("First"));
+      await user.keyboard("{/Control}");
+      expect(
+        await screen.findByRole("heading", { name: "2 messages selected" }),
+      ).toBeInTheDocument();
+      expect(item("First")).toHaveAttribute("data-checked", "true");
+      expect(item("Second")).not.toHaveAttribute("data-checked");
+
+      await user.keyboard("{Shift>}");
+      await user.click(item("Second"));
+      await user.keyboard("{/Shift}");
+      expect(
+        await screen.findByRole("heading", { name: "2 messages selected" }),
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Move to trash" }));
+      await waitFor(() =>
+        expect(api.messages().filter((message) => message.folder === "trash")).toHaveLength(2),
+      );
+      expect(await screen.findByText("Select a message to read it.")).toBeInTheDocument();
+    });
+
+    it("selects by dragging over the list and with Ctrl+A", async () => {
+      const user = setup(three());
+      await list().findByRole("button", { name: /Third/ });
+
+      fireEvent.pointerDown(item("Third"), { button: 0 });
+      fireEvent.pointerEnter(item("First"), { buttons: 1 });
+      expect(
+        await screen.findByRole("heading", { name: "3 messages selected" }),
+      ).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      item("Second").focus();
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("heading", { name: /messages selected/ })).not.toBeInTheDocument();
+
+      await user.keyboard("{Control>}a{/Control}");
+      expect(
+        await screen.findByRole("heading", { name: "3 messages selected" }),
+      ).toBeInTheDocument();
+    });
+
+    it("offers the actions for all selected messages on right-click", async () => {
+      const user = setup(three());
+      await list().findByRole("button", { name: /Third/ });
+      await user.click(item("Third"));
+      await user.keyboard("{Control>}");
+      await user.click(item("Second"));
+      await user.keyboard("{/Control}");
+
+      fireEvent.contextMenu(item("Second"));
+      await user.click(await screen.findByRole("menuitem", { name: "Archive (2)" }));
+      await waitFor(() =>
+        expect(api.messages().filter((message) => message.folder === "archive")).toHaveLength(2),
+      );
+    });
+  });
+
   it("opens the message menu from the keyboard", async () => {
     const user = setup([welcome]);
     const item = await list().findByRole("button", { name: /Welcome/ });

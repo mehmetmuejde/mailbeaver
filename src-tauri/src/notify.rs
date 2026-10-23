@@ -94,7 +94,7 @@ pub fn show_test_notice<R: Runtime>(app: &AppHandle<R>, sound: bool) -> anyhow::
     show(
         app,
         &Notice {
-            title: "Mailbeaver".into(),
+            title: crate::tray::app_name().into(),
             body: "Notifications work. New mail shows up like this.".into(),
             message: None,
         },

@@ -59,10 +59,11 @@ export function MailMessageView({ messageId, onClose }: MailMessageViewProps) {
           </>
         )}
       </dl>
+      <MailMessageBody message={message} />
+      {/* Below the message, where a reader looks after reading it. */}
       {message.attachments.length > 0 ? (
         <MailAttachmentList messageId={message.id} attachments={message.attachments} />
       ) : null}
-      <MailMessageBody message={message} />
     </article>
   );
 }

@@ -1,5 +1,5 @@
 import { Paperclip } from "lucide-react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import type { MessageSummary } from "@/shared/api";
 import { FOLDER_LABELS } from "@/shared/config";
 import { formatBytes, formatDateTime, formatRelativeTime, toIsoString } from "@/shared/lib/format";
@@ -8,11 +8,14 @@ import { UNKNOWN_SENDER } from "../model/group-messages";
 /** Extra button props (handlers, ref) come from wrappers such as the context menu. */
 type MailMessageListItemProps = Omit<ComponentProps<"button">, "onSelect" | "children"> & {
   message: MessageSummary;
+  /** The message open on the right. */
   isSelected: boolean;
+  /** Part of a selection of several messages. */
+  isChecked?: boolean;
   showProject: boolean;
   /** Search results come from every folder; each one says where it lives. */
   showFolder?: boolean;
-  onSelect: (message: MessageSummary) => void;
+  onSelect: (message: MessageSummary, event: MouseEvent<HTMLButtonElement>) => void;
 };
 
 function recipients(to: readonly string[]): string {
@@ -26,6 +29,7 @@ function recipients(to: readonly string[]): string {
 export function MailMessageListItem({
   message,
   isSelected,
+  isChecked = false,
   showProject,
   showFolder = false,
   onSelect,
@@ -37,9 +41,11 @@ export function MailMessageListItem({
       {...buttonProps}
       type="button"
       aria-current={isSelected ? "true" : undefined}
-      onClick={() => onSelect(message)}
-      className="grid w-full gap-0.5 border-b px-4 py-3 text-left hover:bg-muted aria-[current=true]:bg-accent aria-[current=true]:shadow-[inset_3px_0_0_var(--primary)]"
+      data-checked={isChecked ? "true" : undefined}
+      onClick={(event) => onSelect(message, event)}
+      className="grid w-full gap-0.5 border-b px-4 py-3 text-left select-none hover:bg-muted aria-[current=true]:bg-accent aria-[current=true]:shadow-[inset_3px_0_0_var(--primary)] data-[checked=true]:bg-accent data-[checked=true]:shadow-[inset_3px_0_0_var(--primary)]"
     >
+      {isChecked ? <span className="sr-only">Selected: </span> : null}
       <span className="flex items-baseline gap-2">
         <span className={`flex min-w-0 flex-1 items-center gap-2 ${unread ? "font-semibold" : ""}`}>
           {unread ? (

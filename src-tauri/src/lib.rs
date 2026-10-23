@@ -86,6 +86,11 @@ fn setup(
     app: &mut tauri::App,
     logs: Option<LogReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if tauri::is_dev()
+        && let Some(window) = app.get_webview_window(tray::MAIN_WINDOW)
+    {
+        window.set_title(tray::app_name())?;
+    }
     let (status, services) = match start_servers(app, logs) {
         Ok(running) => (
             ServerStatus {

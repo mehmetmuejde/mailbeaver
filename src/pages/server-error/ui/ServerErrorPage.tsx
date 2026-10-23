@@ -38,6 +38,8 @@ export function ServerErrorPage({ message }: ServerErrorPageProps) {
   const hint = hintFor(message);
   return (
     <main className="mx-auto mt-[10vh] grid max-w-2xl gap-3 p-4">
+      {/* The window has no title bar of its own: the top strip moves it. */}
+      <div data-tauri-drag-region className="fixed inset-x-0 top-0 h-14" />
       <h1 className="text-lg font-semibold">Mailbeaver could not start</h1>
       <p role="alert">
         <code className="font-mono">{message}</code>
