@@ -19,16 +19,16 @@ export function PageHeader({ title, children }: PageHeaderProps) {
   const insetForTrafficLights = collapsed && hasOverlayTitleBar();
   return (
     <header
-      data-tauri-drag-region
+      // "deep": the title and the status text, which fill the empty space, drag too;
+      // buttons and inputs inside stay clickable.
+      data-tauri-drag-region="deep"
       // 56 px high (h-14): tauri.conf.json centers the traffic lights on the same line.
       className={`flex min-h-14 flex-wrap items-center gap-3 border-b py-2 pr-4 ${
         insetForTrafficLights ? "pl-22" : "pl-4"
       }`}
     >
       <SidebarToggle />
-      <h1 data-tauri-drag-region className="text-lg font-semibold">
-        {title}
-      </h1>
+      <h1 className="text-lg font-semibold">{title}</h1>
       {children}
     </header>
   );

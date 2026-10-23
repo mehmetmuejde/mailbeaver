@@ -45,7 +45,7 @@ export function AppShell() {
           sidebar toggle and title share one line. Drags the window like a title bar.
         */}
         <div data-tauri-drag-region className={hasOverlayTitleBar() ? "h-14 shrink-0" : "h-3"} />
-        <div data-tauri-drag-region className="flex justify-center px-4 pt-2 pb-6">
+        <div data-tauri-drag-region="deep" className="flex justify-center px-4 pt-2 pb-6">
           <p>
             <Logo dev={IS_DEV_BUILD} />
           </p>
