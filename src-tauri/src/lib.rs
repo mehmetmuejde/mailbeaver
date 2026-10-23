@@ -35,6 +35,9 @@ fn server_status(status: tauri::State<'_, ServerStatus>) -> ServerStatus {
 /// Starts the app again, so saved ports and limits apply (ADR-0031).
 #[tauri::command]
 fn restart_app(app: tauri::AppHandle) {
+    // `restart` skips `RunEvent::Exit`, where the plugin would free its lock; without
+    // this, the new process would hand over to this one and quit (ADR-0033).
+    tauri_plugin_single_instance::destroy(&app);
     app.restart();
 }
 
@@ -174,6 +177,11 @@ pub fn run() {
     let logs = std::sync::Mutex::new(logs);
 
     let app = tauri::Builder::default()
+        // Registered first, so a second start shows the running window and quits before
+        // it tries to take the ports (ADR-0033).
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show_main_window(app);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .setup(move |app| {
