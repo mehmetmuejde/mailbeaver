@@ -21,7 +21,7 @@ maintained by Mehmet Müjde.
 
 | Task | Command |
 |---|---|
-| Run the desktop app | `pnpm tauri dev` |
+| Run the desktop app | `pnpm tauri:dev` (own identifier, ports 1027/8027) |
 | Frontend checks | `pnpm check && pnpm typecheck && pnpm arch && pnpm knip` |
 | Frontend tests | `pnpm test` / `pnpm test:coverage` |
 | Rust checks | `cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace` |

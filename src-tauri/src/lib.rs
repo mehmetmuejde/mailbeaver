@@ -71,10 +71,29 @@ fn send_test_notification(app: tauri::AppHandle, sound: bool) -> Result<(), Stri
     notify::show_test_notice(&app, sound).map_err(|err| format!("{err:#}"))
 }
 
+/// Default ports of `pnpm tauri:dev`, so it runs next to the installed app (ADR-0034).
+const DEV_SMTP_PORT: u16 = 1027;
+const DEV_HTTP_PORT: u16 = 8027;
+
+/// The core's configuration; a development build starts from its own default ports,
+/// which environment variables and saved ports still override.
+fn host_config(data_dir: std::path::PathBuf) -> anyhow::Result<Config> {
+    let mut config = Config::from_env(data_dir)?;
+    if tauri::is_dev() {
+        if !config.from_env.smtp_port {
+            config.smtp_port = DEV_SMTP_PORT;
+        }
+        if !config.from_env.http_port {
+            config.http_port = DEV_HTTP_PORT;
+        }
+    }
+    Ok(config)
+}
+
 fn start_servers(app: &tauri::App, logs: Option<LogReceiver>) -> anyhow::Result<server::Running> {
     let data_dir = app.path().app_data_dir()?;
     std::fs::create_dir_all(&data_dir)?;
-    let config = Config::from_env(data_dir)?;
+    let config = host_config(data_dir)?;
     tauri::async_runtime::block_on(server::start(
         config,
         Host {

@@ -161,7 +161,7 @@ of your platform.
 
 ```sh
 pnpm install
-pnpm tauri dev                  # desktop app with hot reload
+pnpm tauri:dev                  # desktop app with hot reload, next to an installed one
 pnpm test                       # UI tests
 cargo test --workspace          # Rust tests
 pnpm build && cargo run -p mailbeaver-server   # headless server with the UI
