@@ -9,6 +9,7 @@
       "!dist",
       "!coverage",
       "!.scratch",
+      "!.claude/settings.local.json",
       "!node_modules",
       "!src/shared/ui/primitives"
     ]
